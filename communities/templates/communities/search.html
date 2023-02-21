@@ -1,0 +1,189 @@
+{% extends 'white.html' %}
+{% load static %}
+{% block body %}
+<div class="search-comp is--open"
+  style="height: 180px; box-shadow: 10px 20px 30px 0 rgb(92 95 112 / 10%); position: static;">
+  <div class="search-inner">
+    <div class="search-input">
+      <form action="{% url 'communities:search' %}" method="">
+        {% csrf_token %}
+        <input type="text" name="keyword" placeholder="검색어를 입력해주세요.">
+      </form>
+      <!---->
+    </div>
+    <div class="search-bg">
+      <div class="bg-dk">
+        <div class="circle-group left"><svg viewBox="0 0 600 600" width="600" height="600">
+            <defs>
+              <linearGradient id="circle-gradient03">
+                <stop offset="0%" stop-color="#fff" stop-opacity="1"></stop>
+                <stop offset="50%" stop-color="#f2f3f9" stop-opacity="1"></stop>
+              </linearGradient>
+            </defs>
+            <rect width="600" height="600" fill="url(#circle-gradient03)" rx="300"></rect>
+          </svg></div>
+        <div class="circle-group right"><svg viewBox="0 0 600 600" width="600" height="600">
+            <defs>
+              <linearGradient id="circle-gradient04">
+                <stop offset="0%" stop-color="#fff" stop-opacity="1"></stop>
+                <stop offset="50%" stop-color="#f2f3f9" stop-opacity="1"></stop>
+              </linearGradient>
+            </defs>
+            <rect width="600" height="600" fill="url(#circle-gradient04)" rx="300"></rect>
+          </svg></div>
+      </div>
+      <div class="bg-lt">
+        <div class="circle-group left"><svg viewBox="0 0 600 600" width="600" height="600">
+            <defs>
+              <linearGradient id="circle-gradient03">
+                <stop offset="0%" stop-color="#fff" stop-opacity="1"></stop>
+                <stop offset="50%" stop-color="#f2f3f9" stop-opacity="1"></stop>
+              </linearGradient>
+            </defs>
+            <rect width="600" height="600" fill="url(#circle-gradient03)" rx="300"></rect>
+          </svg></div>
+        <div class="circle-group right"><svg viewBox="0 0 600 600" width="600" height="600">
+            <defs>
+              <linearGradient id="circle-gradient04">
+                <stop offset="0%" stop-color="#fff" stop-opacity="1"></stop>
+                <stop offset="50%" stop-color="#f2f3f9" stop-opacity="1"></stop>
+              </linearGradient>
+            </defs>
+            <rect width="600" height="600" fill="url(#circle-gradient04)" rx="300"></rect>
+          </svg></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="d-flex justify-content-center search-result mt-4">
+  <h3 style="font-size: 28px; color: rgb(51, 51 ,51);"><span style="color:#0061FF">'{{keyword}}'</span>에 대한 검색 결과</h3>
+</div>
+<div style="max-width: 550px; margin: 0 auto;">
+  <div class="d-flex align-items-center flex-column" style="margin: 40px; 0">
+    <div class="d-flex flex-column justify-content-center">
+      <p class='mb-2 text-center' style="font-weight: 700; font-size: 28px; color: rgb(51, 51, 51)">국가별 검색</p>
+      <p class="text-muted" style="font-size: 16px; font-weight:400;">아래 국가를 선택해보세요 </p>
+    </div>
+    <div class="d-flex" style="margin-bottom: 27px; flex-wrap: wrap;">
+      <button class="category-title active mx-1" type="button" id="all"
+        style="padding: 10px 20px; border-radius: 22px; height: 40px; border: none;">모두보기</button>
+      {% for country in countries %}
+      <button class="category-title mx-1" type="button" id="{{ country.country_name }}"
+        style="padding: 10px 20px; border-radius: 22px; height: 40px; border: none;" onClick="test()">
+        {{ country.country_name }}</button>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+
+<section class="article-cards d-flex justify-content-center flex-wrap"
+  style="gap:40px; max-width: 1285px; margin: 0 auto; padding: 0 16px;">
+  {% for article in articles %}
+  <div class="sc-gSQFLo eYZFXY {{ article.country.country_name }} all"
+    style="min-width: 240px; max-height: 370px; background-color: white;"
+    data-group="{{ article.country.country_name }}">
+    <a href="{% url 'communities:detail' article.country.country_code article.pk %}">
+      {% if article.image %}
+      <img src="{{ article.image.url }}" style="object-fit: cover; width: 320px; height: 240px;">
+      {% else %}
+      <img src="{% static '/images/none_avatar.jpg' %}" style="width: 320px; height: 240px; object-fit: cover;"
+        alt="img">
+      {% endif %}
+    </a>
+    <div class="sc-lbhJGD jhNfXV"><a class="sc-jgrJph dYjA-dM"
+        href="{% url 'communities:detail' article.country.country_code article.pk %}">
+        <h4>{{ article.title}}</h4>
+      </a>
+      <div class="sub-info" style="color: #868e96;"><span>
+          {{ article.created_at|date:'Y년 m월 d일' }} · {{ article.articlecomment_set.count }}개의
+          댓글</span>
+      </div>
+    </div>
+    <div class="sc-iNGGcK UXOKy"><a class="userinfo" href="{% url 'accounts:detail' article.user.pk %}"><img
+          src="{{ article.user.profile_image.url }}" style="object-fit: cover;"><span>by <b>
+            {{ article.user }}</b></span></a>
+      <div class="likes">
+        <svg width="24" height="24" viewbox="0 0 24 24">
+          <path fill="currentColor" d="M18 1l-6 4-6-4-6 5v7l12 10 12-10v-7z"></path>
+        </svg>{{ article.like_users.count }}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</section>
+
+<script>
+  const categoryTitle = document.querySelectorAll('.category-title');
+  const allCategoryPosts = document.querySelectorAll('.all');
+
+  for (let i = 0; i < categoryTitle.length; i++) {
+    categoryTitle[i].addEventListener('click', filterPosts.bind(this, categoryTitle[i]));
+  }
+
+  function filterPosts(item) {
+    changeActivePosition(item);
+    for (let i = 0; i < allCategoryPosts.length; i++) {
+      if (allCategoryPosts[i].classList.contains(item.attributes.id.value)) {
+        allCategoryPosts[i].style.display = "block";
+      } else {
+        allCategoryPosts[i].style.display = "none";
+      }
+    }
+  }
+
+  function changeActivePosition(activeItem) {
+    for (let i = 0; i < categoryTitle.length; i++) {
+      categoryTitle[i].classList.remove('active');
+    }
+    activeItem.classList.add('active');
+  };
+</script>
+
+<!-- 게시글 페이지네이션 -->
+{% if paginated_articles %}
+<ul class="pagination justify-content-center">
+  <!-- 첫 페이지 -->
+  {% if paginated_articles.has_previous %}
+  <!-- 이전페이지가 있으면 연결(첫 페이지가 아니면) -->
+  <li class="page-item">
+    <a class="page-link" style="color: #5e0080; text-decoration: none;" tabindex="-1" href="?page=1">&#60;</a>
+  </li>
+  {% else %}
+  <li class="page-item disabled">
+    <a class="page-link" href="#">&#60;</a>
+  </li>
+  {% endif %}
+
+  <!-- 페이지리스트 -->
+  <!-- //페이지 범위를 하나씩 리턴 -->
+  {% for page_number in paginated_articles.paginator.page_range %}
+  {% if page_number >= paginated_articles.number|add:-2 and page_number <= paginated_articles.number|add:2 %} <!-- // 현재
+    페이지일 때는 active -->
+    {% if page_number == paginated_articles.number %}
+    <li class="page-item" aria-current="page">
+      <a class="page-link" style="background-color: #5e0080; color: white; text-decoration: none;"
+        href="?page={{ page_number }}">{{ page_number }}</a>
+    </li>
+    {% else %}
+    <li class="page-item text-color-warning">
+      <a class="page-link" style="color: #5e0080; text-decoration: none;" href="?page={{ page_number }}">{{
+        page_number }}</a>
+    </li>
+    {% endif %}
+    {% endif %}
+    {% endfor %}
+
+    <!-- 다음페이지 -->
+    {% if paginated_articles.has_next %}
+    <li class="page-item">
+      <a class="page-link" style="color: #5e0080; text-decoration: none;" href="?page={{ max_index }}">&#62;</a>
+    </li>
+    {% else %}
+    <li class="page-item disabled">
+      <a class="page-link" tabindex="-1" href="#">&#62;</a>
+    </li>
+    {% endif %}
+</ul>
+{% endif %}
+{% endblock body %}

@@ -1,0 +1,602 @@
+{% extends 'white.html' %}
+{% load django_bootstrap5 %}
+{% load static %}
+
+{% block css %}
+  <link rel="stylesheet" href="{% static 'communities/css/style.css' %}">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote.min.js"></script>
+{% endblock css %}
+
+{% block body %}
+
+  <!-- 피드 메인 -->
+
+
+  <!-- 피드 공지사항 -->
+  <div style="max-width: 733px; background-color: white; margin: 0 auto;">
+    <section style="padding: 0 18px">
+      <h2 style="font-size: 19px; max-width: 732px; margin: 0 auto; font-weight: 700; padding-top: 45px;">
+        <span style='margin-right: 14px'>✈️</span>공지사항
+      </h2>
+      <div style="margin: 8px auto 0;  background-color: white; border-radius: 16px; max-width: 732px; max-height: 184px; padding: 12px 0 0;">
+        <ul style="padding-top: 30px; padding: 0px;">
+          <div class="reviews-row" style="padding: 0">
+          </div>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 피드 리뷰 -->
+    
+    <section style="margin-top: 45px; padding: 0 18px">
+      <div class="d-flex justify-content-between align-items-center">
+        <h2 style="font-size: 19px; max-width: 732px; font-weight: 700;">
+          <span style='margin-right: 14px'>🖥️</span>리뷰목록
+        </h2>
+        <!-- <div class="create-wrapper"> <a href="{% url 'communities:review_create' country_code %}" style="text-decoration: none;"> <div class="create"> 리뷰작성 <img class="plane" src="{% static 'communities/img/create.png' %}" alt=""> </div> </a> </div> -->
+        <!-- <button id="create-feed" class="btn btn-outline-success" onclick="getCreateFeed(this.id)">피드생성
+        </button> -->
+        
+      </div>
+      <div id="create-feed-form">
+          <form id="feed-create" data-country-id="{{ country_code }}" onsubmit="createFeed(this.id)">
+            {% csrf_token %}
+            {% bootstrap_form feed_form %}
+            {% bootstrap_button "피드 생성" %}
+          </form>
+        </div>
+      <div id="feed-list" style="margin: 8px auto 0; padding: 13px 0; background-color: white; border-radius: 16px; max-width: 732px; overflow-y: scroll">
+        <ul style="padding-top: 15px; padding: 0px;">
+          {% for feed in feeds %}
+          <div class="feed-row" id="feed-{{ feed.pk }}-row">
+            <div class="feed-wrapper">
+              <div class="feed-user">
+                <div class="feed-img-div">
+                  <img src="{{ feed.user.profile_image.url }}" alt="" class="feed-profile-img">
+                </div>
+              </div>
+                <div class="feed-main">
+                  <div class="feed-user-date">
+                    <p style="font-weight: 400;">{{ feed.user.nick_name }}</p>
+                    <p class="feed-date">
+                      <!-- 작성일자 : ~시간 전 표시 -->
+                      {% if feed.created_string == False %}
+                      <!-- 7일이 지나면 날짜로 출력 -->
+                      {{ feed.created_at | date:'m월 d일' }}
+                      {% else %}
+                      <!-- 7일이 지나기 전이라면 함수 대입한 결과 -->
+                      {{ feed.created_string }}
+                      {% endif %}
+                    </p>
+                  </div>
+                    <p id="feed-{{ feed.pk }}-update-hide">{{ feed.content }}</p>
+                    <div id="feed-{{ feed.pk }}-update-form" class="feed-update-form">
+                      <textarea id="feed-{{ feed.pk }}-update-content"
+                        type="text">{{ feed.content }}</textarea>
+                      <div class="buttons-update">
+                        <button id="feed-{{ feed.pk }}-update-cancel"
+                          data-feed-id="{{ feed.pk }}"
+                          onclick="updateFeedCancel(this.id)">취소</button>
+                        <button id="feed-{{ feed.pk }}-update-btn" class="update-feed"
+                          data-feed-id="{{ feed.pk }}"
+                          onclick="updateFeed(this.id)">작성
+                        </button>
+                      </div>
+                    </div>
+                </div>
+                <button id="feed-{{ feed.pk }}" class="feed-comment-btn"
+                  onclick="getCreateComment(this.id)">답글 열기</button>
+                {% if user.pk == feed.user_id %}
+                <div id="feed-{{feed.pk}}-update-buttons" class="buttons">
+                  <button id="feed-{{ feed.pk }}-update"
+                    data-feed-id="{{ feed.pk }}" onclick="getUpdateFeed(this.id)">수정
+                  </button>
+                  <button id="feed-{{ feed.pk }}-delete"
+                    data-feed-id="{{ feed.pk }}" onclick="deleteFeed(this.id)">삭제
+                  </button>
+                </div>
+                {% endif %}
+              </div>
+
+
+            <div id="feed-{{ feed.pk }}-commentList" data-feed-id="{{ feed.pk }}"
+              class="feed-comment-list">
+              <!-- 이 댓글을 참조하고 있는 모든 대댓글을 순회 -->
+              <div id="comment-{{ comment.pk }}-sub-comments-section">
+                {% for comment in feed.feedcomment_set.all %}
+                <div class="comment-row" id="comment-{{ comment.pk }}-row">
+                  <div class="comment-wrapper" id="comment-{{ comment.pk }}-wrapper">
+                    <div class="comment-user">
+                      <div class="comment-img-div">
+                        {% if not comment.user.profile_image %}
+                        <img src="https://dummyimage.com/48x48/ededed/0011ff" alt="프사 없을 시 사진"
+                          class="comment-profile-img">
+                        {% else %}
+                        <img src="{{ comment.user.profile_image.url }}" alt=""
+                          class="comment-profile-img">
+                        {% endif %}
+                      </div>
+                    </div>
+                    <div class="comment-main">
+                      <div class="comment-user-date">
+                        <p style="font-weight: 400;">{{ comment.user.nick_name }}</p>
+                        <p class="comment-date">
+                          <!-- 작성일자 : ~시간 전 표시 -->
+                          {% if comment.created_string == False %}
+                          <!-- 7일이 지나면 날짜로 출력 -->
+                          {{ comment.created_at | date:'m월 d일' }}
+                          {% else %}
+                          <!-- 7일이 지나기 전이라면 함수 대입한 결과 -->
+                          {{ comment.created_string }}
+                          {% endif %}
+                        </p>
+                      </div>
+                      <p id="comment-{{ comment.pk }}-update-hide">{{ comment.content }}</p>
+                      <div id="comment-{{ comment.pk }}-update-form" class="update-form">
+                        <textarea id="comment-{{ comment.pk }}-update-content"
+                          type="text">{{ comment.content }}</textarea>
+                        <div class="buttons-update">
+                          <button id="comment-{{ comment.pk }}-update-cancel"
+                            data-comment-id="{{ comment.pk }}"
+                            onclick="updateCommentCancel(this.id)">취소</button>
+                          <button id="comment-{{ comment.pk }}-update-btn"
+                            class="update-comment" data-feed-id="{{ feed.pk }}"
+                            data-comment-id="{{ comment.pk }}"
+                            onclick="updateComment(this.id)">작성
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    {% if user.pk == comment.user_id %}
+                    <div id="comment-{{ comment.pk}}-update-buttons" class="buttons">
+                      <button id="comment-{{ comment.pk }}-update"
+                        data-article-id="{{ article.pk }}" data-comment-id="{{ comment.pk }}"
+                        onclick="getUpdateComment(this.id)">수정
+                      </button>
+                      <button id="comment-{{ comment.pk }}-delete"
+                        data-feed-id="{{ feed.pk }}" data-comment-id="{{ comment.pk }}"
+                        onclick="deleteComment(this.id)">삭제
+                      </button>
+                    </div>
+                    {% endif %}
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+              <div id="comment-{{ feed.pk }}-create-sub-comment" class="sub-comment-create">
+                <form id="comment-{{ feed.pk }}-create-sub-comment-form"
+                  data-feed-id="{{ feed.pk }}"
+                  data-country-id="{{ country_code }}" onsubmit="submitComment(this.id)">
+                  <div class="mb-3"><label class="form-label" for="id_content">Content</label><input
+                    type="text" name="content" maxlength="150" class="form-control"
+                    placeholder="Content" required="" id="id_content"></div>
+                  <input type="submit" value="제출">
+                </form>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script>
+    //국가 코드 선언
+    //국가 코드 선언
+    let conPK = '{{ country_code }}';
+
+    function displayedAt(createdAt) {
+      let time = new Date(createdAt)
+      const milliSeconds = new Date() - time
+      const seconds = milliSeconds / 1000
+      if (seconds < 60) 
+        return `방금 전`
+      const minutes = seconds / 60
+      if (minutes < 60) 
+        return `${Math.floor(minutes)}분 전`
+      const hours = minutes / 60
+      if (hours < 24) 
+        return `${Math.floor(hours)}시간 전`
+      const days = hours / 24
+      if (days < 7) 
+        return `${Math.floor(days)}일 전`
+      const weeks = days / 7
+      if (weeks < 5) 
+        return `${Math.floor(weeks)}주 전`
+      const months = days / 30
+      if (months < 12) 
+        return `${Math.floor(months)}개월 전`
+      const years = days / 365
+      return `${Math.floor(years)}년 전`
+    }
+
+    //csrf토큰 추가
+    //csrf토큰 추가
+    const csrftoken = document
+      .querySelector('[name=csrfmiddlewaretoken]')
+      .value;
+
+    
+
+    //비동기로 그려줄 피드 리스트
+    //비동기로 그려줄 피드 리스트
+    function crateFeedList(response, feedList, baseDisplay){
+      for (let i = 0; i < response.data.feeds_data.length; i++) {
+        let date = displayedAt(response.data.feeds_data[i].created_at)
+        feedList.insertAdjacentHTML('beforeend', `
+        <div class="feed-row" id="feed-${response.data.feeds_data[i].feed_pk}-row">
+          <div class="feed-wrapper" id="feed-${response.data.feeds_data[i].feed_pk}-wrapper">
+            <!-- 작성자 프로필 사진-->
+            <div class="feed-user">
+              <div class="feed-img-div">
+                <img src="${response.data.feeds_data[i].img_url}" alt="" class="feed-profile-img">
+              </div>
+            </div>
+            <!-- 피드 주요 영역 -->
+            <div class="feed-main">
+              <!-- 닉네임과 생성 날짜 -->
+              <div class="feed-user-date">
+                <p style="font-weight: 400;">${response.data.feeds_data[i].nick_name}</p>
+                <p class="feed-date">
+                  ${date}
+                </p>
+              </div>
+                <!-- 댓글 내용 -->
+                <p id="feed-${response.data.feeds_data[i].feed_pk}-update-hide">${response.data.feeds_data[i].content}</p>
+                <!-- 수정 폼 -->
+                <div id="feed-${response.data.feeds_data[i].feed_pk}-update-form" class="feed-update-form">
+                  <textarea id="feed-${response.data.feeds_data[i].feed_pk}-update-content"
+                    type="text">${response.data.feeds_data[i].content}</textarea>
+                  <!-- 댓글 수정과 작성 취소 버튼 -->
+                  <div class="buttons-update">
+                    <button id="feed-${response.data.feeds_data[i].feed_pk}-update-cancel"
+                      data-feed-id="${response.data.feeds_data[i].feed_pk}"
+                      onclick="updateFeedCancel(this.id)">취소</button>
+                    <button id="feed-${response.data.feeds_data[i].feed_pk}-update-btn" class="update-feed"
+                      data-feed-id="${response.data.feeds_data[i].feed_pk}"
+                      onclick="updateFeed(this.id)">작성
+                    </button>
+                  </div>
+                </div>
+            </div>
+            <!-- 답글달기(답글 작성 폼 toggle) 버튼 -->
+            <button id="feed-${response.data.feeds_data[i].feed_pk}" class="feed-comment-btn"
+              onclick="getCreateComment(this.id)">답글달기</button>
+          </div>
+
+
+          <!-- 답글 영역 -->
+          <div id="feed-${response.data.feeds_data[i].feed_pk}-commentList" data-feed-id="${response.data.feeds_data[i].feed_pk}"
+            class="feed-comment-list">
+            <div id="comment-${response.data.feeds_data[i].feed_pk}-sub-comments-section">
+
+            </div>
+            <!-- 답글 작성 폼 -->
+            <div id="comment-${response.data.feeds_data[i].feed_pk}-create-sub-comment" class="sub-comment-create">
+              <form id="comment-${response.data.feeds_data[i].feed_pk}-create-sub-comment-form"
+                data-feed-id="${response.data.feeds_data[i].feed_pk}"
+                data-country-id="${conPK}" onsubmit="submitComment(this.id)">
+                <div class="mb-3"><label class="form-label" for="id_content">Content</label><input
+                  type="text" name="content" maxlength="150" class="form-control"
+                  placeholder="Content" required="" id="id_content"></div>
+                <input type="submit" value="제출">
+              </form>
+            </div>
+          </div>
+
+
+        </div>`)
+        const feedWrapper = document.querySelector(`#feed-${response.data.feeds_data[i].feed_pk}-wrapper`)
+        if (response.data.feeds_data[i].user_pk === response.data.feeds_data[i].request_user_pk) {
+          feedWrapper.insertAdjacentHTML('beforeend', `
+          <div id="feed-${response.data.feeds_data[i].feed_pk}-update-buttons" class="buttons">
+            <button id="feed-${response.data.feeds_data[i].feed_pk}-update"
+              data-feed-id="${response.data.feeds_data[i].feed_pk}" onclick="getUpdateFeed(this.id)">수정
+            </button>
+            <button id="feed-${response.data.feeds_data[i].feed_pk}-delete"
+              data-feed-id="${response.data.feeds_data[i].feed_pk}" onclick="deleteFeed(this.id)">삭제
+            </button>
+          </div>`)
+        };
+
+
+        if ("comments_data" in response.data.feeds_data[i]) {
+          const comment = response.data.feeds_data[i]
+          const subAll = comment.comments_data
+
+          for (let j = 0; j < subAll.length; j++) {
+            let sub_date = displayedAt(subAll[j].created_at)
+            const subSection = document.querySelector(`#comment-${comment.feed_pk}-sub-comments-section`)
+            subSection.insertAdjacentHTML('beforeend', `
+            <div class="comment-row" id="comment-${subAll[j].comment_pk}-row">
+              <div class="comment-wrapper" id="comment-${subAll[j].comment_pk}-wrapper">
+                <div class="comment-user">
+                  <div class="comment-img-div">
+                    <img src="${subAll[j].img_url}" alt=""
+                      class="comment-profile-img">
+                  </div>
+                </div>
+                  <div class="comment-main">
+                    <div class="comment-user-date">
+                      <p style="font-weight: 400;">${subAll[j].nick_name}</p>
+                      <p class="comment-date">
+                        ${sub_date}
+                      </p>
+                    </div>
+                      <p id="comment-${subAll[j].comment_pk}-update-hide">${subAll[j].content}</p>
+                      <div id="comment-${subAll[j].comment_pk}-update-form" class="update-form">
+                        <textarea id="comment-${subAll[j].comment_pk}-update-content"
+                          type="text">${subAll[j].content}</textarea>
+                        <div class="buttons-update">
+                          <button id="comment-${subAll[j].comment_pk}-update-cancel"
+                            data-comment-id="${subAll[j].comment_pk}"
+                            onclick="updateCommentCancel(this.id)">취소</button>
+                          <button id="comment-${subAll[j].comment_pk}-update-btn"
+                            class="update-comment" data-feed-id="${subAll[j].feed_pk}"
+                            data-comment-id="${subAll[j].comment_pk}"
+                            onclick="updateComment(this.id)">작성
+                          </button>
+                        </div>
+                      </div>
+                  </div>
+              </div>
+            `)
+
+            const subCommentWrapper = document.querySelector(`#comment-${subAll[j].comment_pk}-wrapper`)
+            if (subAll[j].user_pk === subAll[j].request_user_pk) {
+              subCommentWrapper.insertAdjacentHTML('beforeend', `
+              <div id="comment-${subAll[j].comment_pk}-update-buttons" class="buttons">
+                <button id="comment-${subAll[j].comment_pk}-update" data-feed-id="${response.data.feeds_data[i].feed_pk}"
+                  data-comment-id="${subAll[j].comment_pk}" onclick="getUpdateComment(this.id)">수정
+                </button>
+                <button id="comment-${subAll[j].comment_pk}-delete" data-feed-id="${response.data.feeds_data[i].feed_pk}"
+                  data-comment-id="${subAll[j].comment_pk}" onclick="deleteComment(this.id)">삭제
+                </button>
+              </div>`)
+            }
+          }
+        }
+      }
+
+      // 저장된 답글 영역으로 돌려주기
+      for (let m = 0; m < response.data.feeds_data.length; m++) {
+        let subComLi = document.querySelector(`#feed-${response.data.feeds_data[m].feed_pk}-commentList`)
+        const getSubBtn = document.querySelector(`#feed-${response.data.feeds_data[m].feed_pk}`)
+        // console.log(subComLi)
+        // console.log(baseDisplay[`${response.data.comments_data[m].comment_pk}`])
+        const base = baseDisplay[`${response.data.feeds_data[m].feed_pk}`]
+        subComLi.style.cssText = `display: ${base}`
+        if (subComLi.style.display === "block") {
+          getSubBtn.innerText = "숨기기"
+        } else {
+          getSubBtn.innerText = "답글달기"
+        }
+      }
+
+      return
+    }
+
+    const getDisplay = function () {
+      const subComListAll = document.querySelectorAll('.feed-comment-list')
+      const displayObj = {}
+      for (let n = 0; n < subComListAll.length; n++) {
+          let subcomId = subComListAll[n].dataset.feedId
+          displayObj[`${subcomId}`] = getComputedStyle(subComListAll[n]).display
+          // displayObj.base = getDisplay(subComListAll[n])
+          // console.log(`${n}번째 댓글 영역입니다.`)
+      }
+      return displayObj
+    }
+
+
+    // 피드 생성 창 띄우기
+    // 피드 생성 창 띄우기
+  
+
+
+    // 피드 생성
+    // 피드 생성
+    const createFeed = function (e) {
+      event.preventDefault();
+      const baseDisplay = getDisplay()
+      const feedForm = document.querySelector(`#${e}`);
+      const pk = event.target.dataset.articleId;
+      axios({
+        method: 'post',
+        url: `/communities/${conPK}/feed/feed_create/`,
+        headers: {
+          'X-CSRFToken': csrftoken
+        },
+        data: new FormData(feedForm)
+      }).then(response => {
+        const feedList = document.querySelector(`#feed-list`)
+        feedList.textContent = "";
+        crateFeedList(response, feedList, baseDisplay)
+        feedForm.reset();
+      })
+    }
+
+    // 피드 삭제
+    // 피드 삭제
+    const deleteFeed = function (e) {
+      const pk = event.target.dataset.feedId;
+      const baseDisplay = getDisplay()
+      if (confirm("정말 삭제하시겠습니까?!") === true) {
+        axios({
+          method: 'post',
+          url: `/communities/${conPK}/feed/${pk}/feed_delete/`,
+          headers: {
+              'X-CSRFToken': csrftoken
+          }
+        }).then(response => {
+          const feedList = document.querySelector(`#feed-list`)
+          feedList.textContent = "";
+          crateFeedList(response, feedList, baseDisplay)
+        })
+      }
+    }
+
+    // 피드 수정폼 보이기
+    // 피드 수정폼 보이기
+    const getUpdateFeed = function (e) {
+        const btNs = document.querySelector(`#${e}-buttons`)
+        const updateFeedForm = document.querySelector(`#${e}-form`);
+        const feedContent = document.querySelector(`#${e}-hide`);
+        const feedBase = document.querySelector(`#${e}-hide`).innerText;
+
+        btNs.style.display = "none";
+        feedContent.style.display = "none";
+        updateFeedForm.style.display = "block";
+    }
+
+    // 피드 수정폼 가리기
+    // 피드 수정폼 가리기
+    const updateFeedCancel = function (e) {
+        const comPk = event.target.dataset.feedId
+        const btNs = document.querySelector(`#feed-${comPk}-update-buttons`)
+        const updateFeedForm = document.querySelector(`#feed-${comPk}-update-form`);
+        const feedContent = document.querySelector(`#feed-${comPk}-update-hide`)
+        const feedBase = document.querySelector(`#feed-${comPk}-update-hide`).innerText
+        const feedUpdateContent = document.querySelector(`#feed-${comPk}-update-content`)
+        feedContent.style.display = "block";
+        updateFeedForm.style.display = "none";
+        btNs.style.display = "";
+    }
+
+    // 피드 수정버튼
+    // 피드 수정버튼
+    const updateFeed = function (e) {
+      const feedValue = document.querySelector(`#feed-${event.target.dataset.feedId}-update-content`).value;
+      const pk = event.target.dataset.feedId;
+      const baseDisplay = getDisplay()
+      // const baseDisplay = getDisplay()
+      axios({
+        method: 'post',
+        url: `/communities/${conPK}/feed/${pk}/feed_update/`,
+        headers: {
+          'X-CSRFToken': csrftoken
+        },
+        data: {
+          'content': feedValue
+        }
+      }).then(response => {
+        const feedList = document.querySelector(`#feed-list`)
+        feedList.textContent = "";
+        crateFeedList(response, feedList, baseDisplay)
+      })
+    }
+
+    //댓글 새성창 열기
+    const getCreateComment = function (e) {
+      const getSubBtn = document.querySelector(`#${e}`)
+      const subCommentList = document.querySelector(`#${e}-commentList`)
+      // style = 엘리먼트 스타일로 들어감
+      if (subCommentList.style.display === "block") {
+        getSubBtn.innerText = "답글 열기"
+        subCommentList.style.display = "none"
+      } else {
+        getSubBtn.innerText = "답글 닫기"
+        subCommentList.style.display = "block"
+      }
+      
+    }
+
+    //댓글 생성
+    const submitComment = function (e) {
+      event.preventDefault();
+      // 현재 답글 영역값 저장
+      const baseDisplay = getDisplay()
+      const commentForm = document.querySelector(`#${e}`);
+      const feedPk = event.target.dataset.feedId;
+      axios({
+        method: 'post',
+        url: `/communities/${conPK}/feed/${feedPk}/feed_comment_create/`,
+        headers: {
+            'X-CSRFToken': csrftoken
+        },
+        data: new FormData(commentForm)
+      }).then(response => {
+        const feedList = document.querySelector(`#feed-list`)
+        feedList.textContent = "";
+        crateFeedList(response, feedList, baseDisplay)
+        commentForm.reset();
+      })
+    }
+
+    // 댓글 수정창 열기
+    const getUpdateComment = function (e) {
+      const btNs = document.querySelector(`#${e}-buttons`)
+      const updateCommentForm = document.querySelector(`#${e}-form`);
+      const commentContent = document.querySelector(`#${e}-hide`);
+      const commentBase = document.querySelector(`#${e}-hide`).innerText;
+
+      btNs.style.display = "none";
+      commentContent.style.display = "none";
+      updateCommentForm.style.display = "block";
+    }
+
+    // 댓글 수정창 가리기
+    const updateCommentCancel = function (e) {
+      const comPk = event.target.dataset.commentId
+      const btNs = document.querySelector(`#comment-${comPk}-update-buttons`)
+      const updateCommentForm = document.querySelector(`#comment-${comPk}-update-form`);
+      const commentContent = document.querySelector(`#comment-${comPk}-update-hide`)
+      const commentBase = document.querySelector(`#comment-${comPk}-update-hide`).innerText
+      const commentUpdateContent = document.querySelector(`#comment-${comPk}-update-content`)
+      commentContent.style.display = "block";
+      updateCommentForm.style.display = "none";
+      btNs.style.display = "";
+    }
+
+    // 댓글 수정
+    const updateComment = function (e) {
+      const commentValue = document.querySelector(`#comment-${event.target.dataset.commentId}-update-content`).value;
+      const pk = event.target.dataset.feedId;
+      const coPk = event.target.dataset.commentId;
+      const baseDisplay = getDisplay()
+      axios({
+        method: 'post',
+        url: `/communities/${conPK}/feed/${pk}/${coPk}/feed_comment_update/`,
+        headers: {
+            'X-CSRFToken': csrftoken
+        },
+        data: {
+            'content': commentValue
+        }
+      }).then(response => {
+        const feedList = document.querySelector(`#feed-list`)
+        feedList.textContent = "";
+        crateFeedList(response, feedList, baseDisplay)
+      })
+    }
+
+    // 댓글 삭제
+    const deleteComment = function (e) {
+      const pk = event.target.dataset.feedId;
+      const coPk = event.target.dataset.commentId;
+      const baseDisplay = getDisplay()
+
+      if (confirm("정말 삭제하시겠습니까?!") === true) {
+        axios({
+          method: 'post',
+          url: `/communities/${conPK}/feed/${pk}/${coPk}/feed_comment_delete/`,
+          headers: {
+              'X-CSRFToken': csrftoken
+          }
+        }).then(response => {
+          const feedList = document.querySelector(`#feed-list`)
+          feedList.textContent = "";
+          crateFeedList(response, feedList, baseDisplay)
+        })
+      }
+    }
+
+
+
+  </script>
+
+{% endblock %}

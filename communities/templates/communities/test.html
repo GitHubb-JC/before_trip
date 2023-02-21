@@ -1,0 +1,271 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+{% load django_bootstrap5 %}
+{% block body %}
+
+    <iframe src="https://calendar.google.com/calendar/embed?height=400&wkst=1&bgcolor=%237CB342&ctz=Asia%2FSeoul&title=%EB%AF%B8%EA%B5%AD%20%EC%97%AC%ED%96%89&src=a28uamFwYW5lc2UjaG9saWRheUBncm91cC52LmNhbGVuZGFyLmdvb2dsZS5jb20&color=%234285F4"
+            style="border-width:0" width="400" height="400" frameborder="0" scrolling="no"></iframe>
+
+    {% for a in country %}
+        {% for b in a.events %}
+        {% for key,values in b.items %}
+           <p>{{ key }} : {{ values }}</p>
+
+            {#        {{ a | festival:"title" }}#}
+
+        {% endfor %}
+        {% endfor %}
+    {% endfor %}
+
+{% endblock %}
+
+ <div class="{{ article.pk }}-comment-list" data-article-id="{{ article.pk }}">
+
+
+                        <div class="comment-row">
+                            <div class="comment-user">
+                                <div class="comment-img-div">
+                                        <img src="${response.data.comments_data[i].img_url}" alt="" class="comment-profile-img">
+                                </div>
+                            </div>
+                            <div class="comment-main">
+                                <div class="comment-user-date">
+                                    <p style="font-weight: 400;">${response.data.comments_data[i].nick_name}</p>
+                                    <p>${date)</p>
+                                </div>
+                                <p>${response.data.comments_data[i].content}</p>
+                            </div>
+                                <button id="comment-${response.data.comments_data[i].comment_pk}-update" data-article-id="${response.data.comments_data[i].article_id}"
+                                        data-comment-id="${response.data.comments_data[i].comment_pk}"
+                                        class="btn btn-outline-success" onclick="getUpdateComment(this.id)">수정
+                                </button>
+                                <button id="comment-${response.data.comments_data[i].comment_pk}-delete" data-article-id="${response.data.comments_data[i].article_id}"
+                                        data-comment-id="${response.data.comments_data[i].comment_pk}"
+                                        class="btn btn-outline-danger" onclick="deleteComment(this.id)">삭제
+                                </button>
+                                <div id="comment-${response.data.comments_data[i].comment_pk}-update-form" class="d-none">
+                                    <input id="comment-${response.data.comments_data[i].comment_pk}-update-content" type="text"
+                                           value="${response.data.comments_data[i].content}">
+                                    <button id="comment-${response.data.comments_data[i].comment_pk}-update-btn" class="btn btn-primary"
+                                            data-article-id="${response.data.comments_data[i].article_id}"
+                                            data-comment-id="${response.data.comments_data[i].comment_pk}" onclick="updateComment(this.id)">확인
+                                    </button>
+                                </div>
+                        </div>
+
+          const getUpdateComment = function (e) {
+            const updateComment = document.querySelector(`#${e}-form`);
+            updateComment.classList.toggle('display-none');
+        }
+
+        const updateComment = function (e) {
+            const commentValue = document.querySelector(`#comment-${event.target.dataset.commentId}-update-content`).value;
+            const pk = event.target.dataset.articleId;
+            const country = event.target.dataset.countryId;
+            axios({
+                method: 'post',
+                url: `/communities/${country}/review/${pk}/review_detail/comment_update/`,
+                headers: {'X-CSRFToken': csrftoken},
+                data: {'content':commentValue}
+            })
+                .then(response => {
+                    console.log(response)
+
+                    const commentsList = document.querySelector(`#comment-list-${pk}`)
+
+                    commentsList.textContent = "";
+
+                    for (let i = 0; i < response.data.comments_data.length; i++) {
+                        let date = displayedAt(response.data.comments_data[i].created_at)
+                        if (response.data.comments_data[i].request_user_pk === response.data.comments_data[i].user_pk) {
+                            commentsList.insertAdjacentHTML('beforeend', `<div class="comment-row">
+                            <div class="comment-user">
+                                <div class="comment-img-div">
+                                        <img src="${response.data.comments_data[i].img_url}" alt="" class="comment-profile-img">
+                                </div>
+                            </div>
+                            <div class="comment-main">
+                                <div class="comment-user-date">
+                                    <p style="font-weight: 400;">${response.data.comments_data[i].nick_name}</p>
+                                    <p>${date}</p>
+                                </div>
+                                <p>${response.data.comments_data[i].content}</p>
+                            </div>
+                                <button id="comment-${response.data.comments_data[i].comment_pk}-update" data-article-id="${response.data.comments_data[i].article_id}"
+                                        data-comment-id="${response.data.comments_data[i].comment_pk}"
+                                        class="btn btn-outline-success" onclick="getUpdateComment(this.id)">수정
+                                </button>
+                                <button id="comment-${response.data.comments_data[i].comment_pk}-delete" data-article-id="${response.data.comments_data[i].article_id}"
+                                        data-comment-id="${response.data.comments_data[i].comment_pk}"
+                                        class="btn btn-outline-danger" onclick="deleteComment(this.id)">삭제
+                                </button>
+                                <div id="comment-${response.data.comments_data[i].comment_pk}-update-form" class="d-none">
+                                    <input id="comment-${response.data.comments_data[i].comment_pk}-update-content" type="text"
+                                           value="${response.data.comments_data[i].content}">
+                                    <button id="comment-${response.data.comments_data[i].comment_pk}-update-btn" class="btn btn-primary"
+                                            data-article-id="${response.data.comments_data[i].article_id}"
+                                            data-comment-id="${response.data.comments_data[i].comment_pk}" onclick="updateComment(this.id)">확인
+                                    </button>
+                                </div>
+                        </div>`);
+                        } else {
+                            commentsList.insertAdjacentHTML('beforeend', `<div class="comment-row">
+                            <div class="comment-user">
+                                <div class="comment-img-div">
+                                        <img src="${response.data.comments_data[i].img_url}" alt="" class="comment-profile-img">
+                                </div>
+                            </div>
+                            <div class="comment-main">
+                                <div class="comment-user-date">
+                                    <p style="font-weight: 400;">${response.data.comments_data[i].nick_name}</p>
+                                    <p>${date}</p>
+                                </div>
+                                <p>${response.data.comments_data[i].content}</p>
+                            </div>`);
+                        }
+
+ <span>${response.data.comments_data[i].nickname} | ${response.data.comments_data[i].content} | ${response.data.comments_data[i].created_at} </span>
+            <button id="comment-${response.data.comments_data[i].comment_pk}-update" data-review-id="${response.data.comments_data[i].study_id}" data-comment-id="${response.data.comments_data[i].comment_pk}" class="btn btn-outline-success" onclick="getUpdateComment(this.id)">수정</button>
+            <button id="comment-${response.data.comments_data[i].comment_pk}-delete" data-review-id="${response.data.comments_data[i].study_id}" data-comment-id="${response.data.comments_data[i].comment_pk}" class="btn btn-outline-danger" onclick="deleteComment(this.id)">삭제</button>
+            <div id="comment-${response.data.comments_data[i].comment_pk}-update-form" class="display-none">
+            <input id="comment-${response.data.comments_data[i].comment_pk}-update-content" type="text" value="${response.data.comments_data[i].content}">
+            <button id="comment-${response.data.comments_data[i].comment_pk}-update-btn" class="btn btn-primary" data-review-id="${response.data.comments_data[i].study_id}" data-comment-id="${response.data.comments_data[i].comment_pk}" onclick="updateComment(this.id)">확인</button>
+            </div><br>
+
+ function displayedAt(createdAt) {
+  const milliSeconds = new Date() - createdAt
+  const seconds = milliSeconds / 1000
+  if (seconds < 60) return `방금 전`
+  const minutes = seconds / 60
+  if (minutes < 60) return `${Math.floor(minutes)}분 전`
+  const hours = minutes / 60
+  if (hours < 24) return `${Math.floor(hours)}시간 전`
+  const days = hours / 24
+  if (days < 7) return `${Math.floor(days)}일 전`
+  const weeks = days / 7
+  if (weeks < 5) return `${Math.floor(weeks)}주 전`
+  const months = days / 30
+  if (months < 12) return `${Math.floor(months)}개월 전`
+  const years = days / 365
+  return `${Math.floor(years)}년 전`
+}
+=======================
+     def article_comment_delete(request, article_pk, comment_pk, country_code):
+    if request.user.is_authenticated:
+        comment = ArticleComment.objects.get(pk=comment_pk)
+        comment.delete()
+
+        comments = ArticleComment.objects.filter(article_id=article_pk).order_by('-pk')
+        comments_data = []
+        for co in comments:
+
+            img = f'/media/{co.user.profile_image}'
+
+            if img == '/media/':
+                comments_data.append(
+                    {
+                        'created_string': co.created_string,
+                        'request_user_pk': request.user.pk,
+                        'comment_pk': co.pk,
+                        'user_pk': co.user.pk,
+                        'img_url': 'https://dummyimage.com/48x48/ededed/0011ff',
+                        'nick_name': co.user.nick_name,
+                        'content': co.content,
+                        'created_at': co.created_at,
+                        'updated_at': co.updated_at,
+                        'article_id': co.article_id,
+                        'parent': co.parent,
+                        'secret': co.secret,
+                        'like': co.like.count(),
+                    })
+            else:
+                comments_data.append(
+                    {
+                        'created_string': co.created_string,
+                        'request_user_pk': request.user.pk,
+                        'comment_pk': co.pk,
+                        'user_pk': co.user.pk,
+                        'img_url': img,
+                        'nick_name': co.user.nick_name,
+                        'content': co.content,
+                        'created_at': co.created_at,
+                        'updated_at': co.updated_at,
+                        'article_id': co.article_id,
+                        'parent': co.parent,
+                        'secret': co.secret,
+                        'like': co.like.count(),
+                    })
+        context = {
+            'comments_data': comments_data
+        }
+        return JsonResponse(context)
+=======================
+
+             const deleteComment = function (e) {
+            const pk = event.target.dataset.articleId;
+            const compk = event.target.dataset.commentId;
+            if (confirm("정말 삭제하시겠습니까??") === true) {
+                axios({
+                    method: 'post',
+                    url: `/communities/${conPK}/review/${pk}/review_detail/${compk}/comment_delete/`,
+                    headers: {'X-CSRFToken': csrftoken},
+                })
+                    .then(response => {
+                        const commentsList = document.querySelector(`#comment-list-${pk}`)
+                        commentsList.textContent = "";
+
+                        for (let i = 0; i < response.data.comments_data.length; i++) {
+                            let date = displayedAt(response.data.comments_data[i].created_at)
+                            if (response.data.comments_data[i].request_user_pk === response.data.comments_data[i].user_pk) {
+                                commentsList.insertAdjacentHTML('beforeend', `<div class="comment-row">
+                            <div class="comment-user">
+                                <div class="comment-img-div">
+                                        <img src="${response.data.comments_data[i].img_url}" alt="" class="comment-profile-img">
+                                </div>
+                            </div>
+                            <div class="comment-main">
+                                <div class="comment-user-date">
+                                    <p style="font-weight: 400;">${response.data.comments_data[i].nick_name}</p>
+                                    <p>${date}</p>
+                                </div>
+                                <p>${response.data.comments_data[i].content}</p>
+                            </div>
+                                <button id="comment-${response.data.comments_data[i].comment_pk}-update" data-article-id="${response.data.comments_data[i].article_id}"
+                                        data-comment-id="${response.data.comments_data[i].comment_pk}"
+                                        class="btn btn-outline-success" onclick="getUpdateComment(this.id)">수정
+                                </button>
+                                <button id="comment-${response.data.comments_data[i].comment_pk}-delete" data-article-id="${response.data.comments_data[i].article_id}"
+                                        data-comment-id="${response.data.comments_data[i].comment_pk}"
+                                        class="btn btn-outline-danger" onclick="deleteComment(this.id)">삭제
+                                </button>
+                                <div id="comment-${response.data.comments_data[i].comment_pk}-update-form" class="d-none">
+                                    <input id="comment-${response.data.comments_data[i].comment_pk}-update-content" type="text"
+                                           value="${response.data.comments_data[i].content}">
+                                    <button id="comment-${response.data.comments_data[i].comment_pk}-update-btn" class="btn btn-primary"
+                                            data-article-id="${response.data.comments_data[i].article_id}"
+                                            data-comment-id="${response.data.comments_data[i].comment_pk}" onclick="updateComment(this.id)">확인
+                                    </button>
+                                </div>
+                        </div>`);
+                            } else {
+                                commentsList.insertAdjacentHTML('beforeend', `<div class="comment-row">
+                            <div class="comment-user">
+                                <div class="comment-img-div">
+                                        <img src="${response.data.comments_data[i].img_url}" alt="" class="comment-profile-img">
+                                </div>
+                            </div>
+                            <div class="comment-main">
+                                <div class="comment-user-date">
+                                    <p style="font-weight: 400;">${response.data.comments_data[i].nick_name}</p>
+                                    <p>${date}</p>
+                                </div>
+                                <p>${response.data.comments_data[i].content}</p>
+                            </div>`);
+                            }
+
+                        }
+                    })
+            } else {
+                return;
+            }
+        }
